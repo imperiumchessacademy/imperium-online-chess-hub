@@ -23,6 +23,15 @@ function formatShortDate(dateStr: string) {
 export default async function HomePage() {
   const user = await stackServerApp.getUser({ or: 'return-null' });
 
+  // Fetch team stats from sync table (online count, member count)
+  const { data: teamStats } = await supabaseAdmin
+    .from('team_stats')
+    .select('*')
+    .eq('id', 'imperium')
+    .maybeSingle();
+
+  const activePlayers = teamStats?.online_count ?? 0;
+
   // Fetch top players from Supabase
   const { data: allPlayers } = await supabaseAdmin
     .from('live_standings')
@@ -116,7 +125,7 @@ export default async function HomePage() {
             </div>
             <div>
               <p className="text-xs sm:text-sm text-muted-foreground">Active players</p>
-              <p className="text-xl sm:text-2xl font-bold text-foreground">{players.length || '-'}</p>
+              <p className="text-xl sm:text-2xl font-bold text-foreground">{activePlayers || '-'}</p>
             </div>
           </CardContent>
         </Card>
