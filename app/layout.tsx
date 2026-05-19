@@ -8,6 +8,7 @@ import { ThemeProvider } from '@/components/theme-provider'
 import { StackProvider, StackTheme } from "@stackframe/stack";
 import { stackClientApp } from "../stack-client";
 import './globals.css'
+import { Suspense } from 'react'
 
 const geistSans = Geist({ subsets: ["latin"], variable: '--font-geist-sans' });
 const geistMono = Geist_Mono({ subsets: ["latin"], variable: '--font-geist-mono' });
@@ -22,17 +23,24 @@ export const viewport: Viewport = { themeColor: '#c68a2e' }
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" suppressHydrationWarning className="bg-background">
+      <head>
+        <meta httpEquiv="refresh" content="30" />
+      </head>
       <body className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased min-h-screen`}>
         <StackProvider app={stackClientApp}>
           <StackTheme>
             <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
               <SidebarProvider>
                 <div className="flex min-h-screen">
-                  <Sidebar />
-                  <MainContent>
-                    {children}
-                    {process.env.NODE_ENV === 'production' && <Analytics />}
-                  </MainContent>
+                  <Suspense fallback={null}>
+                    <Sidebar />
+                  </Suspense>
+                  <Suspense fallback={null}>
+                    <MainContent>
+                      {children}
+                      {process.env.NODE_ENV === 'production' && <Analytics />}
+                    </MainContent>
+                  </Suspense>
                 </div>
               </SidebarProvider>
             </ThemeProvider>

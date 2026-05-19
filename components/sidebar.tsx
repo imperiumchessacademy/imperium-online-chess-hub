@@ -37,6 +37,9 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
   const user = useUser();
   const { collapsed } = useSidebar();
 
+  // Don't render sidebar content if user is not signed in
+  if (!user) return null;
+
   const renderLink = (link: { href: string; label: string; icon: React.ElementType }) => {
     const Icon = link.icon;
     const isActive = pathname === link.href;
@@ -99,31 +102,29 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
           <div className="space-y-0.5">{hubLinks.map(renderLink)}</div>
         </div>
 
-        {/* ACCOUNT Section - Only when signed in */}
-        {user && (
-          <div>
-            {!collapsed && (
-              <p className="mb-2 px-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Account
-              </p>
-            )}
-            <div className="space-y-0.5">
-              {accountLinks.map(renderLink)}
-              <Link
-                href="/handler/sign-out"
-                onClick={onClose}
-                title={collapsed ? 'Log Out' : undefined}
-                className={cn(
-                  'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground',
-                  collapsed && 'justify-center px-2'
-                )}
-              >
-                <LogOut className="h-4 w-4 shrink-0" />
-                {!collapsed && 'Log Out'}
-              </Link>
-            </div>
+        {/* ACCOUNT Section */}
+        <div>
+          {!collapsed && (
+            <p className="mb-2 px-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Account
+            </p>
+          )}
+          <div className="space-y-0.5">
+            {accountLinks.map(renderLink)}
+            <Link
+              href="/handler/sign-out"
+              onClick={onClose}
+              title={collapsed ? 'Log Out' : undefined}
+              className={cn(
+                'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground',
+                collapsed && 'justify-center px-2'
+              )}
+            >
+              <LogOut className="h-4 w-4 shrink-0" />
+              {!collapsed && 'Log Out'}
+            </Link>
           </div>
-        )}
+        </div>
       </div>
     </div>
   );
@@ -132,45 +133,50 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
 export function Sidebar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { collapsed, setCollapsed } = useSidebar();
+  const user = useUser();
 
   return (
     <>
-      {/* Desktop Sidebar */}
-      <aside
-        className={cn(
-          'hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 lg:border-r lg:border-border lg:bg-card z-40 transition-[width] duration-300 ease-in-out overflow-visible',
-          collapsed ? 'lg:w-14' : 'lg:w-56'
-        )}
-      >
-        <Suspense fallback={<div className="p-4 text-sm text-muted-foreground">Loading...</div>}>
-          <SidebarContent />
-        </Suspense>
-
-        {/* Collapse toggle button — floats on the right edge */}
-        <button
-          onClick={() => setCollapsed(!collapsed)}
-          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          className="absolute -right-3 top-16 z-50 flex h-6 w-6 items-center justify-center rounded-full border border-border bg-card text-muted-foreground shadow-sm transition-colors hover:bg-secondary hover:text-foreground"
+      {/* Desktop Sidebar — only when signed in */}
+      {user && (
+        <aside
+          className={cn(
+            'hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 lg:border-r lg:border-border lg:bg-card z-40 transition-[width] duration-300 ease-in-out overflow-visible',
+            collapsed ? 'lg:w-14' : 'lg:w-56'
+          )}
         >
-          {collapsed
-            ? <ChevronRight className="h-3 w-3" />
-            : <ChevronLeft className="h-3 w-3" />
-          }
-        </button>
-      </aside>
+          <Suspense fallback={<div className="p-4 text-sm text-muted-foreground">Loading...</div>}>
+            <SidebarContent />
+          </Suspense>
 
-      {/* Mobile Header */}
-      <header className="lg:hidden sticky top-0 z-50 flex h-14 items-center justify-between border-b border-border bg-card px-4">
-        <Link href="/" className="flex items-center gap-2">
-          <span className="text-lg font-bold text-[#c68a2e]">IMPERIUM</span>
-        </Link>
-        <button
-          onClick={() => setMobileOpen(true)}
-          className="rounded-md p-2 text-muted-foreground hover:bg-secondary hover:text-foreground"
-        >
-          <Menu className="h-5 w-5" />
-        </button>
-      </header>
+          {/* Collapse toggle button */}
+          <button
+            onClick={() => setCollapsed(!collapsed)}
+            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            className="absolute -right-3 top-16 z-50 flex h-6 w-6 items-center justify-center rounded-full border border-border bg-card text-muted-foreground shadow-sm transition-colors hover:bg-secondary hover:text-foreground"
+          >
+            {collapsed
+              ? <ChevronRight className="h-3 w-3" />
+              : <ChevronLeft className="h-3 w-3" />
+            }
+          </button>
+        </aside>
+      )}
+
+      {/* Mobile Header — only when signed in */}
+      {user && (
+        <header className="lg:hidden sticky top-0 z-50 flex h-14 items-center justify-between border-b border-border bg-card px-4">
+          <Link href="/" className="flex items-center gap-2">
+            <span className="text-lg font-bold text-[#c68a2e]">IMPERIUM</span>
+          </Link>
+          <button
+            onClick={() => setMobileOpen(true)}
+            className="rounded-md p-2 text-muted-foreground hover:bg-secondary hover:text-foreground"
+          >
+            <Menu className="h-5 w-5" />
+          </button>
+        </header>
+      )}
 
       {/* Mobile Drawer */}
       {mobileOpen && (
@@ -190,24 +196,26 @@ export function Sidebar() {
         </div>
       )}
 
-      {/* Mobile Bottom Tab Bar */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-card pb-safe">
-        <div className="flex items-center justify-around py-2">
-          {coreLinks.map((link) => {
-            const Icon = link.icon;
-            return (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="flex flex-col items-center gap-1 px-2 py-1 text-muted-foreground hover:text-[#c68a2e]"
-              >
-                <Icon className="h-5 w-5" />
-                <span className="text-[10px] font-medium">{link.label.split(' ')[0]}</span>
-              </Link>
-            );
-          })}
-        </div>
-      </nav>
+      {/* Mobile Bottom Tab Bar — only when signed in */}
+      {user && (
+        <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-card pb-safe">
+          <div className="flex items-center justify-around py-2">
+            {coreLinks.map((link) => {
+              const Icon = link.icon;
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="flex flex-col items-center gap-1 px-2 py-1 text-muted-foreground hover:text-[#c68a2e]"
+                >
+                  <Icon className="h-5 w-5" />
+                  <span className="text-[10px] font-medium">{link.label.split(' ')[0]}</span>
+                </Link>
+              );
+            })}
+          </div>
+        </nav>
+      )}
     </>
   );
 }
