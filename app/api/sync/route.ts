@@ -3,7 +3,8 @@ import { supabaseAdmin } from '@/lib/supabase/admin';
 
 const LICHESS_TOKEN = process.env.LICHESS_API_TOKEN;
 const TEAM_ID = 'imperium-online-chess-hub';
-const TOURNAMENT_IDS = (process.env.TOURNAMENT_IDS || 'xzhzQVxf,ptyMGwDZ').split(',').filter(Boolean);
+const TOURNAMENT_IDS = (process.env.TOURNAMENT_IDS || 'xzhzQVxf,yqHy6mqV,ptyMGwDZ,slQNCaWx,jjaPg6lx,f4DDiEZj,XumZr9yp,YjzKj3jk,xMDkWjEL,nbIN6fyI,4qsPNbFc,tO1IWDkp,JFZKEAsT,xVXz8DCi,U7VtIrBy,9klMJXzG,KOi5RVr2,sOXXOfqu,sWAQGGHA,bVZMkJqb,8s5rwyzU,zguWCZQK,3h1BVwM6,TzBHx2SS,qcx3LmUL,2Svyb413,uCEujwvb,FYC1mOIX,EyqohihR,cP4pzyAf,f2Jc4upF,S3K0NMVw,VT6IoUbQ,P9rcVbwA,YAVntqlI,jZevsnmB,fBe2S9x8,5o28Ypqa,rNtYxgMQ,3QXje8kL,vw1N9sWY,bQiPq4DB,MiKAnxsR,d8I1tTvx,eF4kT106,XjmirUlO,dMXRvQmQ,W7XW77Cu,UxHsHOTm,Ng02JIWj,2dnWMvZf,GRGBfLSk,nBrnbjUI,B6JPm17a,duR7asDM,X7gA90C8,3H2p8fj0,dC2DKxYk,kkOco2Ww,JpuIjyQ7,gxXNBhPe,YSwPCZdo,ibPEC57r').split(',').filter(Boolean);
+
 
 async function fetchLichessApi(endpoint: string) {
   const res = await fetch(`https://lichess.org${endpoint}`, {
