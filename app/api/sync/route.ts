@@ -3,13 +3,17 @@ import { supabaseAdmin } from '@/lib/supabase/admin';
 
 const LICHESS_TOKEN = process.env.LICHESS_API_TOKEN;
 const TEAM_ID = 'imperium-online-chess-hub';
-const TOURNAMENT_IDS = (process.env.TOURNAMENT_IDS || 'xzhzQVxf,yqHy6mqV,ptyMGwDZ,slQNCaWx,jjaPg6lx,f4DDiEZj,XumZr9yp,YjzKj3jk,xMDkWjEL,nbIN6fyI,4qsPNbFc,tO1IWDkp,JFZKEAsT,xVXz8DCi,U7VtIrBy,9klMJXzG,KOi5RVr2,sOXXOfqu,sWAQGGHA,bVZMkJqb,8s5rwyzU,zguWCZQK,3h1BVwM6,TzBHx2SS,qcx3LmUL,2Svyb413,uCEujwvb,FYC1mOIX,EyqohihR,cP4pzyAf,f2Jc4upF,S3K0NMVw,VT6IoUbQ,P9rcVbwA,YAVntqlI,jZevsnmB,fBe2S9x8,5o28Ypqa,rNtYxgMQ,3QXje8kL,vw1N9sWY,bQiPq4DB,MiKAnxsR,d8I1tTvx,eF4kT106,XjmirUlO,dMXRvQmQ,W7XW77Cu,UxHsHOTm,Ng02JIWj,2dnWMvZf,GRGBfLSk,nBrnbjUI,B6JPm17a,duR7asDM,X7gA90C8,3H2p8fj0,dC2DKxYk,kkOco2Ww,JpuIjyQ7,gxXNBhPe,YSwPCZdo,ibPEC57r').split(',').filter(Boolean);
+const TOURNAMENT_IDS = (process.env.TOURNAMENT_IDS || '').split(',').filter(Boolean);
 
+function delay(ms: number) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
 
 async function fetchLichessApi(endpoint: string) {
   const res = await fetch(`https://lichess.org${endpoint}`, {
     headers: { Authorization: `Bearer ${LICHESS_TOKEN}`, Accept: 'application/json' },
     cache: 'no-store',
+    signal: AbortSignal.timeout(10000),
   });
   if (!res.ok) throw new Error(`Lichess API ${endpoint}: ${res.status}`);
   return res.json();
@@ -19,6 +23,7 @@ async function fetchLichessStream(endpoint: string): Promise<any[]> {
   const res = await fetch(`https://lichess.org${endpoint}`, {
     headers: { Authorization: `Bearer ${LICHESS_TOKEN}`, Accept: 'application/x-ndjson' },
     cache: 'no-store',
+    signal: AbortSignal.timeout(15000),
   });
   if (!res.ok) throw new Error(`Lichess stream ${endpoint}: ${res.status}`);
   const text = await res.text();
@@ -28,26 +33,32 @@ async function fetchLichessStream(endpoint: string): Promise<any[]> {
 export async function GET() {
   const report: any = { status: 'started', steps: [] };
   try {
+    report.steps.push('Fetching team members...');
     const members = await fetchLichessStream(`/api/team/${TEAM_ID}/users`);
     report.membersFound = members.length;
 
     const ratingMap: Record<string, number> = {};
+    let idx = 0;
     for (const member of members) {
       try {
+        await delay(100);
         const profile = await fetchLichessApi(`/api/user/${member.id}`);
         const rating = profile.perfs?.rapid?.rating ?? profile.perfs?.blitz?.rating ?? profile.perfs?.classical?.rating ?? null;
         ratingMap[profile.username.toLowerCase()] = rating;
+        idx++;
       } catch (e) {}
     }
+    report.ratingMapSize = idx;
 
     const allTournamentResults: Record<string, { score: number; username: string; played: number }> = {};
     let syncedTournaments = 0;
 
-    // Delete old empty tournaments first
     await supabaseAdmin.from('tournaments').delete().eq('participant_count', 0);
 
+    report.steps.push(`Syncing ${TOURNAMENT_IDS.length} tournaments...`);
     for (const tId of TOURNAMENT_IDS) {
       try {
+        await delay(500);
         const tData = await fetchLichessApi(`/api/tournament/${tId}`);
         const players = tData.standing?.players || [];
         if (players.length === 0) continue;
