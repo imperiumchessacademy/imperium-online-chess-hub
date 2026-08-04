@@ -24,7 +24,6 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="en" suppressHydrationWarning className="bg-background">
       <head>
-        <meta httpEquiv="refresh" content="30" />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased min-h-screen`}>
         <StackProvider app={stackClientApp}>
