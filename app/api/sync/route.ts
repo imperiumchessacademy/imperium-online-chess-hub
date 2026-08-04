@@ -43,7 +43,7 @@ export async function GET() {
       try {
         await delay(100);
         const profile = await fetchLichessApi(`/api/user/${member.id}`);
-        const rating = profile.perfs?.rapid?.rating ?? profile.perfs?.blitz?.rating ?? profile.perfs?.classical?.rating ?? null;
+        const rating = profile.perfs?.blitz?.rating ?? profile.perfs?.bullet?.rating ?? profile.perfs?.rapid?.rating ?? null;
         ratingMap[profile.username.toLowerCase()] = rating;
         idx++;
       } catch (e) {}
